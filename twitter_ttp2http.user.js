@@ -13,7 +13,9 @@ var ttp2http = () => {
     var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
     var node;
     while (node = walker.nextNode()) {
-        node.nodeValue = node.nodeValue.replace(/[^hH]ttp/g, 'http');
+        if(node.nodeValue.match(/[^hH]ttp|^ttp/g)){
+            node.nodeValue = node.nodeValue.replace(/[^hH]ttp|^ttp/g, 'http');
+        }
     }
 }
 var url2clickable = () => {
@@ -38,20 +40,24 @@ var url2clickable = () => {
     textNodes.forEach(node => {
         const text = node.nodeValue;
         if (urlPattern.test(text)) {
-            const span = document.createElement('span');
+            const fragment = document.createDocumentFragment();
             let lastIndex = 0;
+            let modified = false;
             text.replace(urlPattern, (url, index) => {
-                span.appendChild(document.createTextNode(text.slice(lastIndex, index)));
+                modified = true;
+                fragment.appendChild(document.createTextNode(text.slice(lastIndex, index)));
                 const a = document.createElement('a');
                 a.href = url;
                 a.textContent = url;
                 a.target = '_blank';
-                span.appendChild(a);
+                fragment.appendChild(a);
 
                 lastIndex = index + url.length;
             });
-            span.appendChild(document.createTextNode(text.slice(lastIndex)));
-            node.parentNode.replaceChild(span, node);
+            fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+            if (modified) {
+                node.parentNode.replaceChild(fragment, node);
+            }
         }
     });
 };
